@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../lib/database/prisma.service';
 import { CreateHackathonDto } from './dto/create-hackathon.dto';
 import { UpdateHackathonDto } from './dto/update-hackathon.dto';
@@ -84,6 +84,52 @@ export class HackathonService {
 
     return this.prisma.hackathon.delete({
       where: { id },
+    });
+  }
+
+  async join(hackathonId: string, userId: string) {
+    const hackathon = await this.prisma.hackathon.findUnique({
+      where: { id: hackathonId },
+    });
+
+    if (!hackathon) {
+      throw new NotFoundException(`Hackathon with ID "${hackathonId}" not found`);
+    }
+
+    if (!hackathon.isActive) {
+      throw new BadRequestException('Hackathon is not active');
+    }
+
+    if (new Date() > hackathon.endDate) {
+      throw new BadRequestException('Hackathon has already ended');
+    }
+
+    const existingParticipant = await this.prisma.hackathonParticipant.findUnique({
+      where: {
+        hackathonId_userId: {
+          hackathonId,
+          userId,
+        },
+      },
+    });
+
+    if (existingParticipant) {
+      throw new BadRequestException('You have already joined this hackathon');
+    }
+
+    return this.prisma.hackathonParticipant.create({
+      data: {
+        hackathonId,
+        userId,
+      },
+      include: {
+        hackathon: {
+          select: { id: true, name: true, startDate: true, endDate: true },
+        },
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+      },
     });
   }
 }

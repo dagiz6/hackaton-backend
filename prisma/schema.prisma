@@ -14,16 +14,18 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  role          Role      @default(PARTICIPANT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id                     String                 @id @default(uuid())
+  name                   String
+  email                  String                 @unique
+  emailVerified          Boolean                @default(false)
+  image                  String?
+  role                   Role                   @default(PARTICIPANT)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  sessions               Session[]
+  accounts               Account[]
+  createdHackathons      Hackathon[]            @relation("AuthorHackathons")
+  hackathonRegistrations HackathonParticipant[] @relation("ParticipantRegistrations")
 }
 
 model Session {
@@ -68,4 +70,34 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
+}
+
+model Hackathon {
+  id           String                 @id @default(uuid())
+  name         String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean                @default(true)
+  authorId     String
+  author       User                   @relation("AuthorHackathons", fields: [authorId], references: [id], onDelete: Cascade)
+  participants HackathonParticipant[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([authorId])
+}
+
+model HackathonParticipant {
+  id          String    @id @default(uuid())
+  hackathonId String
+  userId      String
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  user        User      @relation("ParticipantRegistrations", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([hackathonId, userId])
+  @@index([userId])
+  @@index([hackathonId])
 }

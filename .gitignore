@@ -36,7 +36,8 @@ AGENTS.md
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
+.claude
+.windsurf
 
 # dotenv environment variable files
 .env
@@ -59,3 +60,5 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 memory.md
 
+
+/generated/prisma
